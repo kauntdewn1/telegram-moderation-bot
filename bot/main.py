@@ -79,6 +79,30 @@ async def warn(update: Update, context: CallbackContext) -> None:
     except Exception as e:
         await update.message.reply_text(f"❌ Erro ao enviar aviso: {e}")
 
+# /start - Iniciar o bot
+async def start(update: Update, context: CallbackContext) -> None:
+    await update.message.reply_text("🤖 Bot iniciado! Use /help para ver os comandos disponíveis.")
+
+# /regras - Mostrar as regras do chat
+async def regras(update: Update, context: CallbackContext) -> None:
+    await update.message.reply_text("📜 Regras do chat:\n"
+                                    "1️⃣ Respeite todos os membros.\n"
+                                    "2️⃣ Não envie links suspeitos.\n"
+                                    "3️⃣ Proibido spam e mensagens ofensivas.\n"
+                                    "4️⃣ Siga as diretrizes da comunidade.\n\n"
+                                    "❗ O não cumprimento pode resultar em banimento.")
+
+# /help - Mostrar os comandos disponíveis
+async def help(update: Update, context: CallbackContext) -> None:
+    await update.message.reply_text("ℹ️ Comandos disponíveis:\n"
+                                    "/start - Iniciar o bot\n"
+                                    "/regras - Mostrar as regras do chat\n"
+                                    "/ban - Banir um usuário (somente admin)\n"
+                                    "/mute - Silenciar um usuário (somente admin)\n"
+                                    "/unmute - Desmutar um usuário (somente admin)\n"
+                                    "/warn - Avisar um usuário (somente admin)\n"
+                                    "/help - Mostrar esta mensagem de ajuda")
+
 # Função para iniciar o bot
 def iniciar_bot():
     logging.basicConfig(level=logging.INFO)
@@ -95,6 +119,7 @@ def iniciar_bot():
 
     # Adicionando handlers de comandos
     app.add_handler(CommandHandler("start", start))
+    # Adiciona o handler para o comando /regras que mostra as regras do chat
     app.add_handler(CommandHandler("regras", regras))
     app.add_handler(CommandHandler("help", help))
     app.add_handler(CommandHandler("ban", ban))
