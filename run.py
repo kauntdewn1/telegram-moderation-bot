@@ -1,5 +1,4 @@
 import logging
-from bot import start_bot
 from bot import iniciar_bot
 
 logging.basicConfig(level=logging.INFO)
