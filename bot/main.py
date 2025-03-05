@@ -1,7 +1,53 @@
 import logging
 import os
-from telegram import Update, ChatPermissions
-from telegram.ext import Application, CommandHandler, CallbackContext
+from telegram import Update, ChatPermissions, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, CommandHandler, MessageHandler, CallbackContext, filters
+
+# Mensagem de boas-vindas com botões interativos
+async def boas_vindas(update: Update, context: CallbackContext) -> None:
+    for user in update.message.new_chat_members:
+        keyboard = [
+            [InlineKeyboardButton("📜 Regras do Grupo", callback_data="regras")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        await update.message.reply_text(
+            f"🎉 Bem-vindo, {user.first_name}! 🚀\n\n"
+            "Aqui estão algumas informações importantes para você começar:",
+            reply_markup=reply_markup
+        )
+
+
+# Handler de boas-vindas ao grupo
+app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, boas_vindas))
+
+# Função para responder ao botão das regras
+async def botao_clicado(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    if query.data == "regras":
+        await query.message.reply_text("📜 **Regras do Grupo:**\n1. Respeite todos.\n2. Sem spam.\n3. Seja ativo!")
+
+# Lista de palavras proibidas (adapte conforme necessário)
+PALAVRAS_PROIBIDAS = ["spam", "scam", "fraude", "clique aqui", "dinheiro fácil"]
+
+# Função de verificação de mensagens (AntiSpam)
+async def verificar_mensagem(update: Update, context: CallbackContext) -> None:
+    mensagem = update.message.text.lower()
+    palavras_proibidas = ["spam", "fraude", "dinheiro fácil"]
+
+    if any(palavra in mensagem for palavra in palavras_proibidas):
+        await update.message.delete()
+        await update.message.reply_text(f"⚠️ {update.message.from_user.first_name}, sua mensagem foi removida por conter conteúdo proibido!")
+
+            # Se a mensagem contém links e não é de um admin, remove
+    if "http" in mensagem or ".com" in mensagem:
+        chat_member = await context.bot.get_chat_member(update.effective_chat.id, update.effective_user.id)
+        if chat_member.status not in ["administrator", "creator"]:
+            await update.message.delete()
+            await update.message.reply_text(f"🚫 {update.message.from_user.first_name}, links não são permitidos no grupo!")
+            
+            # Adicionar filtro de mensagens no `iniciar_bot`
+app.add_handler(MessageHandler(filters.TEXT & ~filters.Command(), verificar_mensagem))
 
 # Verifica se o usuário que enviou o comando é admin
 async def is_admin(update: Update) -> bool:
@@ -103,7 +149,7 @@ async def help(update: Update, context: CallbackContext) -> None:
                                     "/warn - Avisar um usuário (somente admin)\n"
                                     "/help - Mostrar esta mensagem de ajuda")
 
-# Função para iniciar o bot
+# Função principal para iniciar o bot
 def iniciar_bot():
     logging.basicConfig(level=logging.INFO)
     print("Bot iniciado! Aguardando mensagens...")
@@ -114,8 +160,14 @@ def iniciar_bot():
         print("Erro: O token do bot não foi encontrado. Verifique o arquivo .env")
         return
 
-    # Criando a aplicação
+    # Criando o aplicativo do bot
     app = Application.builder().token(TOKEN).build()
+
+    # Adicionando os handlers ao bot
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.Command(), verificar_mensagem))
+    app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, boas_vindas))
+    app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, boas_vindas))
+    app.add_handler(CommandHandler("regras", botao_clicado))
 
     # Adicionando handlers de comandos
     app.add_handler(CommandHandler("start", start))
@@ -129,3 +181,7 @@ def iniciar_bot():
 
     # Rodando o bot
     app.run_polling()
+
+# Rodar o bot apenas se este arquivo for executado diretamente
+if __name__ == "__main__":
+    iniciar_bot()
