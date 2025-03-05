@@ -1,7 +1,7 @@
 import logging
 import os
 from telegram import Update, ChatPermissions, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, MessageHandler, CallbackContext, filters
+from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, CallbackContext, filters
 
 # Mensagem de boas-vindas com botões interativos
 async def boas_vindas(update: Update, context: CallbackContext) -> None:
@@ -32,19 +32,25 @@ def iniciar_bot():
     # Criando o aplicativo do bot
     app = Application.builder().token(TOKEN).build()
 
-    # Adicionando os handlers dentro da função iniciar_bot()
+    # Adicionando os handlers corretamente
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, verificar_mensagem))
     app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, boas_vindas))
-    app.add_handler(CommandHandler("regras", botao_clicado))
+    app.add_handler(CallbackQueryHandler(botao_clicado))  # Para botões
+    app.add_handler(CommandHandler("regras", comando_regras))  # Para comando /regras
 
     # Rodando o bot
     app.run_polling()
 
-# Função para responder ao botão das regras
+# Função para responder ao botão "Regras"
 async def botao_clicado(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
-    if query.data == "regras":
+    if query and query.data == "regras":
+        await query.answer()
         await query.message.reply_text("📜 **Regras do Grupo:**\n1. Respeite todos.\n2. Sem spam.\n3. Seja ativo!")
+
+        # Função para responder ao comando "/regras"
+async def comando_regras(update: Update, context: CallbackContext) -> None:
+    await update.message.reply_text("📜 **Regras do Grupo:**\n1. Respeite todos.\n2. Sem spam.\n3. Seja ativo!")
 
 # Lista de palavras proibidas (adapte conforme necessário)
 PALAVRAS_PROIBIDAS = ["spam", "scam", "fraude", "clique aqui", "dinheiro fácil"]
@@ -66,7 +72,7 @@ async def verificar_mensagem(update: Update, context: CallbackContext) -> None:
             await update.message.reply_text(f"🚫 {update.message.from_user.first_name}, links não são permitidos no grupo!")
             
             # Adicionar filtro de mensagens no `iniciar_bot`
-            
+
 # Verifica se o usuário que enviou o comando é admin
 async def is_admin(update: Update) -> bool:
     chat_member = await update.effective_chat.get_member(update.effective_user.id)
@@ -198,7 +204,7 @@ def iniciar_bot():
     app.add_handler(CommandHandler("warn", warn))
 
     # Rodando o bot
-    app.run_polling()
+    app.run_polling()   
 
 # Rodar o bot apenas se este arquivo for executado diretamente
 if __name__ == "__main__":
