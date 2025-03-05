@@ -1,5 +1,5 @@
 import logging
-from bot import iniciar_bot  # Verifique se esse import está correto
+from bot import iniciar_bot
 
 logging.basicConfig(level=logging.INFO)
 print("Bot iniciado! Aguardando mensagens...")
