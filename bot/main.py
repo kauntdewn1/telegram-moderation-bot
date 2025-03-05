@@ -18,8 +18,27 @@ async def boas_vindas(update: Update, context: CallbackContext) -> None:
         )
 
 
-# Handler de boas-vindas ao grupo
-app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, boas_vindas))
+# Função principal para iniciar o bot
+def iniciar_bot():
+    logging.basicConfig(level=logging.INFO)
+    print("Bot iniciado! Aguardando mensagens...")
+
+    TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+
+    if not TOKEN:
+        print("Erro: O token do bot não foi encontrado. Verifique o arquivo .env")
+        return
+
+    # Criando o aplicativo do bot
+    app = Application.builder().token(TOKEN).build()
+
+    # Adicionando os handlers dentro da função iniciar_bot()
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, verificar_mensagem))
+    app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, boas_vindas))
+    app.add_handler(CommandHandler("regras", botao_clicado))
+
+    # Rodando o bot
+    app.run_polling()
 
 # Função para responder ao botão das regras
 async def botao_clicado(update: Update, context: CallbackContext) -> None:
@@ -47,8 +66,7 @@ async def verificar_mensagem(update: Update, context: CallbackContext) -> None:
             await update.message.reply_text(f"🚫 {update.message.from_user.first_name}, links não são permitidos no grupo!")
             
             # Adicionar filtro de mensagens no `iniciar_bot`
-app.add_handler(MessageHandler(filters.TEXT & ~filters.Command(), verificar_mensagem))
-
+            
 # Verifica se o usuário que enviou o comando é admin
 async def is_admin(update: Update) -> bool:
     chat_member = await update.effective_chat.get_member(update.effective_user.id)
